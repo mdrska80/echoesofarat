@@ -16,5 +16,11 @@
     "Name": "Flint Dagger",
     "Description": "A crude but sharp dagger made of flint.",
     "Weight": 0.3
+  },
+  {
+    "Id": "lapis_lazuli_bead",
+    "Name": "Lapis Lazuli Bead",
+    "Description": "A small, deep blue bead.",
+    "Weight": 0.01
   }
 ] 

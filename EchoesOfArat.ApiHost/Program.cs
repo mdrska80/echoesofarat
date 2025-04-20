@@ -34,11 +34,11 @@ public class Program
         // Register static data (load once, make available)
         var staticItems = GameDataLoader.LoadItems();
         var staticLocations = GameDataLoader.LoadLocations();
-        var staticEncounters = GameDataLoader.LoadEncounters(); // Load encounters
+        var staticEncounters = GameDataLoader.LoadDetailedEncounters();
         // TODO: Load static factions, skills etc.
         builder.Services.AddSingleton(staticItems);
-        builder.Services.AddSingleton(staticLocations); 
-        builder.Services.AddSingleton(staticEncounters); // Register encounters
+        builder.Services.AddSingleton(staticLocations);
+        builder.Services.AddSingleton(staticEncounters); // Register detailed encounters
 
         // Register the persistence layer
         builder.Services.AddSingleton<IGameStateRepository, JsonGameStateRepository>();

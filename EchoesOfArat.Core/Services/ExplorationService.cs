@@ -1,4 +1,5 @@
 using EchoesOfArat.Core.Models;
+using EchoesOfArat.Core.Models.Encounters;
 using Microsoft.Extensions.Logging;
 using System.Linq; // Needed for ToList() to iterate safely while potentially modifying collection
 
@@ -9,16 +10,19 @@ public class ExplorationService
     private readonly WorldState _worldState;
     private readonly ILogger<ExplorationService> _logger;
     private readonly List<Encounter> _staticEncounters; // Inject loaded encounters
+    private readonly List<Item> _staticItems; // Inject static items for rewards
     // TODO: Inject NpcService, LocationService if needed for validation
 
-    public ExplorationService(WorldState worldState, ILogger<ExplorationService> logger, List<Encounter> staticEncounters)
+    public ExplorationService(WorldState worldState, ILogger<ExplorationService> logger, List<Encounter> staticEncounters, List<Item> staticItems)
     {
         _worldState = worldState;
         _logger = logger;
         _staticEncounters = staticEncounters;
+        _staticItems = staticItems;
         // Initialize the ActiveExpeditions list if it's null (e.g., after deserialization)
         _worldState.ActiveExpeditions ??= new List<ActiveExpedition>(); 
-        _logger.LogInformation("ExplorationService initialized with {EncounterCount} static encounters.", _staticEncounters.Count);
+        _logger.LogInformation("ExplorationService initialized with {EncounterCount} detailed encounters and {ItemCount} static items.", 
+            _staticEncounters.Count, _staticItems.Count);
     }
 
     /// <summary>
@@ -125,58 +129,170 @@ public class ExplorationService
         }
     }
 
-    // Updated method signature
     private void CheckForEncounters(ActiveExpedition expedition, List<string> turnLogs)
     {
         _logger.LogDebug("Checking for encounters for expedition {ExpeditionId}...", expedition.Id);
         
-        // Only check for encounters if there are static encounters loaded
         if (!_staticEncounters.Any()) return;
 
-        // Simple placeholder: 30% chance of *any* encounter per update
-        if (Random.Shared.NextDouble() < 0.30) 
+        // Simple placeholder: Increased chance for testing
+        if (Random.Shared.NextDouble() < 0.50) 
         {
-            // Select a random encounter from the loaded list
             int randomIndex = Random.Shared.Next(_staticEncounters.Count);
             Encounter triggeredEncounter = _staticEncounters[randomIndex];
 
-            // Get involved NPC(s) for logging/effects
             var involvedNpcs = expedition.NpcIds
                 .Select(id => _worldState.Npcs.FirstOrDefault(n => n.Id == id))
                 .Where(npc => npc != null)
                 .ToList();
             
-            if (!involvedNpcs.Any()) return; // Should not happen if expedition is valid
+            if (!involvedNpcs.Any()) return; 
 
+            // --- Log Encounter Start --- 
             string npcNames = string.Join(", ", involvedNpcs.Select(n => n!.Name));
             string locationName = _worldState.DiscoveredLocations.GetValueOrDefault(expedition.TargetLocationId)?.Name ?? "Unknown Location";
+            string encounterStartLog = $"[Encounter @ {locationName} ({npcNames})]: {triggeredEncounter.Title} - {triggeredEncounter.InitialDescription}";
+            _logger.LogInformation(encounterStartLog);
+            turnLogs.Add(encounterStartLog);
 
-            // Format log message
-            string encounterLog = $"[Encounter @ {locationName} ({npcNames})]: {triggeredEncounter.Description}"; 
-            
-            _logger.LogInformation(encounterLog);
-            turnLogs.Add(encounterLog); // Add encounter description to turn log for client
-
-            // Apply simple effects (e.g., stress)
-            if (triggeredEncounter.StressChange != 0)
+            // --- Simulate Choice & Resolution (NO PLAYER INPUT YET) ---
+            // Simple simulation: Always try the first choice available
+            EncounterChoice chosenChoice = triggeredEncounter.Choices.FirstOrDefault();
+            if (chosenChoice == null)
             {
-                foreach (var npc in involvedNpcs)
+                _logger.LogWarning("Encounter {EncounterId} has no choices defined.", triggeredEncounter.Id);
+                return; // No choice to make
+            }
+
+            string choiceLog = $"  -> Simulating choice: '{chosenChoice.Text}'";
+            _logger.LogInformation(choiceLog);
+            turnLogs.Add(choiceLog);
+
+            EncounterOutcome finalOutcome;
+            bool skillCheckPassed = true; // Assume success if no check
+
+            // Simulate Skill Check if present
+            if (chosenChoice.SkillCheck != null)
+            {
+                // Use the first available NPC for the check for simplicity
+                Npc checkingNpc = involvedNpcs.First()!;
+                SkillCheckInfo checkInfo = chosenChoice.SkillCheck;
+                
+                // TODO: Implement actual skill check logic (roll dice, add bonuses)
+                int npcSkillLevel = checkingNpc.Skills.GetValueOrDefault(checkInfo.Skill, 0); // Get skill level (default 0)
+                int roll = Random.Shared.Next(1, 21); // Simulate d20 roll
+                int totalResult = roll + npcSkillLevel; // Simple check, no bonuses yet
+                skillCheckPassed = totalResult >= checkInfo.DifficultyClass;
+
+                string checkLog = $"    (Skill Check: {checkingNpc.Name} attempts {checkInfo.Skill} DC {checkInfo.DifficultyClass}. Roll {roll} + Skill {npcSkillLevel} = {totalResult} -> {(skillCheckPassed ? "Success!" : "Failure!")})";
+                _logger.LogInformation(checkLog);
+                turnLogs.Add(checkLog);
+            }
+
+            // Determine the outcome based on skill check
+            if (skillCheckPassed)
+            {
+                finalOutcome = chosenChoice.SuccessOutcome;
+            }
+            else
+            {
+                // Use failure outcome if it exists, otherwise maybe default success?
+                // Or maybe failure means nothing happens? Let's use FailureOutcome if present.
+                finalOutcome = chosenChoice.FailureOutcome ?? chosenChoice.SuccessOutcome; 
+            }
+
+            // --- Apply Outcome --- 
+            _logger.LogInformation("    Outcome: {OutcomeDescription}", finalOutcome.Description);
+            turnLogs.Add($"    Outcome: {finalOutcome.Description}");
+
+            // Apply Consequences
+            if (finalOutcome.Consequences != null)
+            {
+                foreach (var consequence in finalOutcome.Consequences)
                 {
-                    npc!.CurrentMentalState.AddStress(triggeredEncounter.StressChange);
-                    string stressLog = $"  -> {npc.Name} stress {(triggeredEncounter.StressChange > 0 ? "increased" : "decreased")} to {npc.CurrentMentalState.CurrentStress}.";
-                    _logger.LogInformation(stressLog);
-                    // Optionally add stress change details to turnLogs too?
-                    // turnLogs.Add(stressLog);
+                    ApplyConsequence(involvedNpcs, consequence, turnLogs);
                 }
             }
 
-            // TODO: Replace with actual encounter resolution logic 
-            // - Filter encounters based on location, stance, NPC skills/traits
-            // - Perform skill checks
-            // - Grant rewards/XP/discoveries
-            // - Update WorldState (new locations, items)
-            // - Potentially pause expedition / require player input via API callback?
+            // Apply Rewards
+            if (finalOutcome.Rewards != null)
+            {
+                foreach (var reward in finalOutcome.Rewards)
+                {
+                    ApplyReward(involvedNpcs, reward, turnLogs);
+                }
+            }
         }
+    }
+
+    // Helper to apply consequences
+    private void ApplyConsequence(List<Npc?> involvedNpcs, Consequence consequence, List<string> turnLogs)
+    {
+        _logger.LogDebug("Applying consequence: {Type} Amount: {Amount}", consequence.Type, consequence.Amount);
+        switch (consequence.Type)
+        {
+            case ConsequenceType.Stress:
+                foreach (var npc in involvedNpcs)
+                {
+                    if (npc == null) continue;
+                    int oldStress = npc.CurrentMentalState.CurrentStress;
+                    npc.CurrentMentalState.AddStress(consequence.Amount);
+                    string log = $"      -> {npc.Name} stress changed from {oldStress} to {npc.CurrentMentalState.CurrentStress} ({consequence.Amount:+0;-#})";
+                    _logger.LogInformation(log);
+                    turnLogs.Add(log);
+                }
+                break;
+            case ConsequenceType.ItemLoss:
+                // TODO: Implement item loss logic
+                _logger.LogWarning("ItemLoss consequence not implemented yet.");
+                break;
+            case ConsequenceType.Injury:
+                // TODO: Implement injury logic
+                _logger.LogWarning("Injury consequence not implemented yet.");
+                break;
+            case ConsequenceType.Reputation:
+                // TODO: Implement reputation consequence
+                 _logger.LogWarning("Reputation consequence not implemented yet.");
+                 break;
+        }
+    }
+
+    // Helper to apply rewards
+    private void ApplyReward(List<Npc?> involvedNpcs, Reward reward, List<string> turnLogs)
+    {
+         _logger.LogDebug("Applying reward: {Type} Value: {Value} Amount: {Amount}", reward.Type, reward.Value, reward.Amount);
+         switch (reward.Type)
+         {
+             case RewardType.Item:
+                 Item? itemToAdd = _staticItems.FirstOrDefault(item => item.Id == reward.Value);
+                 if (itemToAdd != null)
+                 {   
+                     // Give item to the first NPC for simplicity
+                     Npc? receivingNpc = involvedNpcs.FirstOrDefault();
+                     if (receivingNpc != null) {
+                         for(int i=0; i < reward.Amount; ++i) { // Add correct amount
+                             bool added = receivingNpc.CurrentInventory.TryAddItem(itemToAdd);
+                             string log = $"      -> {receivingNpc.Name} received {itemToAdd.Name}. {(added ? "" : "(Inventory full!)")}";
+                             _logger.LogInformation(log);
+                             turnLogs.Add(log);
+                         }
+                     } else { _logger.LogWarning("No valid NPC found to receive item reward: {ItemId}", itemToAdd.Id); }
+                 } 
+                 else { _logger.LogWarning("Could not find static item for reward: {ItemId}", reward.Value); }
+                 break;
+            case RewardType.Xp:
+                // TODO: Implement XP reward
+                _logger.LogWarning("XP reward not implemented yet.");
+                break;
+            case RewardType.Discovery:
+                // TODO: Implement discovery reward (e.g., new location, lore)
+                _logger.LogWarning("Discovery reward not implemented yet.");
+                break;
+             case RewardType.Reputation:
+                 // TODO: Implement reputation reward
+                 _logger.LogWarning("Reputation reward not implemented yet.");
+                 break;
+         }
     }
 
     // Updated method signature

@@ -1,0 +1,37 @@
+[
+  {
+    "Id": "discovery_encounter_1",
+    "Title": "The Sunken Offering Bowl",
+    "Type": "Discovery",
+    "InitialDescription": "While near the water's edge, you spot the curved rim of a ceramic offering bowl half-submerged in the mud.",
+    "Choices": [
+      {
+        "Id": "retrieve",
+        "Text": "Carefully retrieve the bowl",
+        "SkillCheck": {
+          "Skill": "Observation",
+          "DifficultyClass": 10
+        },
+        "SuccessOutcome": {
+          "Description": "With steady hands, you manage to free the bowl intact. Inside, nestled in the remaining silt, is a small Lapis Lazuli bead!",
+          "Rewards": [
+            { "Type": "Item", "Value": "lapis_lazuli_bead", "Amount": 1 }
+          ]
+        },
+        "FailureOutcome": {
+          "Description": "As you reach for it, the muddy bank gives way slightly. The bowl slips further into the murky water and is lost.",
+          "Consequences": [
+            { "Type": "Stress", "Amount": 2 }
+          ]
+        }
+      },
+      {
+        "Id": "leave",
+        "Text": "Leave it undisturbed",
+        "SuccessOutcome": {
+          "Description": "Deciding not to interfere with whatever ritual or purpose the bowl served, you move on."
+        }
+      }
+    ]
+  }
+] 

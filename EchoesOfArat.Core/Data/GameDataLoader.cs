@@ -121,22 +121,21 @@ public static class GameDataLoader
         }
     }
 
-    // Added method to load encounters
-    public static List<Encounter> LoadEncounters(string filePath = "Data/encounters.json")
+    // Renamed and updated to load the detailed encounter structure
+    public static List<Encounter> LoadDetailedEncounters(string filePath = "Data/detailed_encounters.json")
     {
         var fullPath = Path.GetFullPath(filePath);
-        Console.WriteLine($"Attempting to load encounters from: {fullPath}");
+        Console.WriteLine($"Attempting to load detailed encounters from: {fullPath}");
         try
         {
             string json = File.ReadAllText(fullPath);
-            // Use shared options
             var encounters = JsonSerializer.Deserialize<List<Encounter>>(json, jsonOptions);
-            Console.WriteLine($"Loaded {encounters?.Count ?? 0} encounters successfully.");
+            Console.WriteLine($"Loaded {encounters?.Count ?? 0} detailed encounters successfully.");
             return encounters ?? new List<Encounter>();
         }
         catch (Exception ex)
         {
-            Console.WriteLine($"[ERROR] Error loading encounters from {fullPath}: {ex.Message}");
+            Console.WriteLine($"[ERROR] Error loading detailed encounters from {fullPath}: {ex.Message}");
             return new List<Encounter>(); // Return empty list on error
         }
     }
