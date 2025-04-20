@@ -1,0 +1,23 @@
+[
+  {
+    "StaticId": "base_camp",
+    "Name": "Base Camp",
+    "Description": "Your starting point and main hub.",
+    "Type": "Settlement",
+    "ConnectedLocationStaticIds": ["nearby_oasis"]
+  },
+  {
+    "StaticId": "nearby_oasis",
+    "Name": "Nearby Oasis",
+    "Description": "A small patch of green around a spring.",
+    "Type": "Oasis",
+    "ConnectedLocationStaticIds": ["base_camp", "dusty_ruin_entrance"]
+  },
+   {
+    "StaticId": "dusty_ruin_entrance",
+    "Name": "Dusty Ruin Entrance",
+    "Description": "The crumbling entrance to some forgotten structure.",
+    "Type": "RuinKhemri",
+    "ConnectedLocationStaticIds": ["nearby_oasis"]
+  }
+] 

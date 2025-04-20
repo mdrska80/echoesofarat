@@ -1,0 +1,54 @@
+# User-specific files should not be committed
+*.suo
+*.user
+*.userosscache
+*.sln.docstates
+
+# Build results
+[Bb]in/
+[Oo]bj/
+[Rr]elease*/
+[Dd]ebug*/
+[Nn]etstandard*/
+[Ww]eb[Aa]pp*/
+
+# Visual Studio cache files
+.vs/
+*.Cache
+ClientBin/
+~$*
+*.dbmdl
+*.jfm
+*.lock.json
+*.log
+*.opendb
+*.sdf
+
+# Rider
+.idea/
+
+# OS generated files
+.DS_Store
+Thumbs.db
+
+# Publish folder
+**/publish/
+
+# Nuget Packages
+*.nupkg
+*.snupkg
+**/packages/*
+!**/packages/repositories.config
+
+# Environment variables file
+.env
+
+# Secrets
+secrets.json
+appsettings.*secret*.json
+
+# Tooling
+.config/dotnet-tools.json
+
+# Test results
+TestResults/ 

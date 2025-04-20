@@ -1,0 +1,20 @@
+[
+  {
+    "Id": "basic_rations",
+    "Name": "Basic Rations",
+    "Description": "A day's worth of simple, preserved food.",
+    "Weight": 0.5
+  },
+  {
+    "Id": "waterskin_small",
+    "Name": "Waterskin (Small)",
+    "Description": "Holds a small amount of water.",
+    "Weight": 0.2
+  },
+  {
+    "Id": "flint_dagger",
+    "Name": "Flint Dagger",
+    "Description": "A crude but sharp dagger made of flint.",
+    "Weight": 0.3
+  }
+] 
