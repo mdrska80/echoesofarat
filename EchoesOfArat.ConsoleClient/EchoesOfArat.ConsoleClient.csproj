@@ -1,0 +1,20 @@
+<Project Sdk="Microsoft.NET.Sdk">
+
+  <PropertyGroup>
+    <OutputType>Exe</OutputType>
+    <TargetFramework>net7.0</TargetFramework> <!-- Match backend SDK -->
+    <ImplicitUsings>enable</ImplicitUsings>
+    <Nullable>enable</Nullable>
+  </PropertyGroup>
+
+  <ItemGroup>
+    <!-- Reference Core project for Models -->
+    <ProjectReference Include="..\EchoesOfArat.Core\EchoesOfArat.Core.csproj" />
+  </ItemGroup>
+
+  <ItemGroup>
+    <!-- Add package for HttpClient JSON extensions -->
+    <PackageReference Include="System.Net.Http.Json" Version="7.0.0" />
+  </ItemGroup>
+
+</Project> 

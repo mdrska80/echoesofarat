@@ -66,7 +66,8 @@ public class Npc // Changed to class to easily accommodate complex state
     }
 
     // Private parameterless constructor for deserialization if needed
-    private Npc() 
+    // Making it public for System.Text.Json
+    public Npc() 
     {
         // Initialize non-nullable reference types to satisfy warnings
         // Use default values or 'null!' if appropriate for deserialization context

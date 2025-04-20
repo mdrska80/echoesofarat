@@ -1,6 +1,7 @@
 using EchoesOfArat.Core.Models;
 // using Microsoft.Extensions.Logging; // Removed logger dependency for now
 using System.Text.Json;
+using System.Text.Json.Serialization; // Required for JsonStringEnumConverter
 using System.IO;
 
 namespace EchoesOfArat.Core.Data;
@@ -20,6 +21,13 @@ public static class GameDataLoader
         List<string> ConnectedLocationStaticIds
     );
 
+    // Define shared options for deserialization
+    private static readonly JsonSerializerOptions jsonOptions = new JsonSerializerOptions
+    {
+        PropertyNameCaseInsensitive = true,
+        Converters = { new JsonStringEnumConverter() } // Handle enums as strings
+    };
+
     public static List<Item> LoadItems(string filePath = "Data/items.json")
     {
         var fullPath = Path.GetFullPath(filePath);
@@ -28,7 +36,8 @@ public static class GameDataLoader
         try
         {
             string json = File.ReadAllText(fullPath);
-            var items = JsonSerializer.Deserialize<List<Item>>(json, new JsonSerializerOptions { PropertyNameCaseInsensitive = true });
+            // Use shared options
+            var items = JsonSerializer.Deserialize<List<Item>>(json, jsonOptions);
             // logger?.LogInformation("Loaded {ItemCount} items successfully.", items?.Count ?? 0);
             Console.WriteLine($"Loaded {items?.Count ?? 0} items successfully.");
             return items ?? new List<Item>();
@@ -50,7 +59,8 @@ public static class GameDataLoader
         try
         {
             string json = File.ReadAllText(fullPath);
-            var staticDataList = JsonSerializer.Deserialize<List<StaticLocationData>>(json, new JsonSerializerOptions { PropertyNameCaseInsensitive = true });
+            // Use shared options
+            var staticDataList = JsonSerializer.Deserialize<List<StaticLocationData>>(json, jsonOptions);
 
             if (staticDataList == null) {
                 // logger?.LogError("Failed to deserialize location data from {FilePath}. Result was null.", fullPath);
@@ -108,6 +118,26 @@ public static class GameDataLoader
             // logger?.LogError(ex, "Error loading locations from {FilePath}", fullPath);
             Console.WriteLine($"[ERROR] Error loading locations from {fullPath}: {ex.Message}");
             return new Dictionary<string, Location>(); // Return empty dictionary on error
+        }
+    }
+
+    // Added method to load encounters
+    public static List<Encounter> LoadEncounters(string filePath = "Data/encounters.json")
+    {
+        var fullPath = Path.GetFullPath(filePath);
+        Console.WriteLine($"Attempting to load encounters from: {fullPath}");
+        try
+        {
+            string json = File.ReadAllText(fullPath);
+            // Use shared options
+            var encounters = JsonSerializer.Deserialize<List<Encounter>>(json, jsonOptions);
+            Console.WriteLine($"Loaded {encounters?.Count ?? 0} encounters successfully.");
+            return encounters ?? new List<Encounter>();
+        }
+        catch (Exception ex)
+        {
+            Console.WriteLine($"[ERROR] Error loading encounters from {fullPath}: {ex.Message}");
+            return new List<Encounter>(); // Return empty list on error
         }
     }
 

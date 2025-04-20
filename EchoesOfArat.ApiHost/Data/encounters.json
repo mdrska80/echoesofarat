@@ -1,0 +1,23 @@
+[
+  {
+    "Id": "discovery_shiny_rock",
+    "Description": "Found a curiously shimmering rock embedded in the sand.",
+    "Type": "Discovery"
+  },
+  {
+    "Id": "hazard_loose_stones",
+    "Description": "Nearly slipped on some loose stones, causing a moment of panic!",
+    "Type": "Hazard",
+    "StressChange": 5
+  },
+  {
+    "Id": "discovery_old_footprints",
+    "Description": "Noticed some old, weathered footprints leading off the beaten path.",
+    "Type": "Discovery"
+  },
+  {
+    "Id": "nothing_of_note",
+    "Description": "Scanned the surroundings but found nothing particularly interesting.",
+    "Type": "Generic"
+  }
+] 

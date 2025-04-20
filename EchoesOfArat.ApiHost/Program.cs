@@ -34,8 +34,11 @@ public class Program
         // Register static data (load once, make available)
         var staticItems = GameDataLoader.LoadItems();
         var staticLocations = GameDataLoader.LoadLocations();
+        var staticEncounters = GameDataLoader.LoadEncounters(); // Load encounters
+        // TODO: Load static factions, skills etc.
         builder.Services.AddSingleton(staticItems);
-        builder.Services.AddSingleton(staticLocations);
+        builder.Services.AddSingleton(staticLocations); 
+        builder.Services.AddSingleton(staticEncounters); // Register encounters
 
         // Register the persistence layer
         builder.Services.AddSingleton<IGameStateRepository, JsonGameStateRepository>();
@@ -187,8 +190,14 @@ public class Program
         app.MapPost("/api/gametime/advance", (TimeService timeService, WorldState worldState) =>
         {
             apiLogger.LogInformation("Endpoint '/api/gametime/advance' accessed.");
-            timeService.AdvanceTurn();
-            return Results.Ok(new { CurrentGameTime = worldState.CurrentGameTime });
+            timeService.AdvanceTurn(); // This now populates worldState.CurrentTurnLogs
+            // Return current game time and the logs generated during the turn
+            var response = new 
+            { 
+                CurrentGameTime = worldState.CurrentGameTime,
+                TurnLogs = worldState.CurrentTurnLogs 
+            };
+            return Results.Ok(response); 
         });
 
         // == Expedition Endpoints ==
@@ -210,6 +219,25 @@ public class Program
         {
             apiLogger.LogInformation("Endpoint '/api/locations' accessed.");
             return Results.Ok(worldState.DiscoveredLocations.Values);
+        });
+
+        // Added endpoint to get a location by its static ID (from loaded static data)
+        app.MapGet("/api/locations/byStaticId/{staticId}", (string staticId, Dictionary<string, Location> staticLocations, ILogger<Program> endpointLogger) =>
+        {
+            // Log the incoming request and the state of the dictionary
+            endpointLogger.LogInformation("Endpoint '/api/locations/byStaticId/{StaticId}' accessed.", staticId);
+            endpointLogger.LogDebug("Available static location keys: {Keys}", string.Join(", ", staticLocations.Keys)); // Log keys
+
+            if (staticLocations.TryGetValue(staticId, out var location))
+            {
+                endpointLogger.LogInformation("Found location for static ID '{StaticId}'.", staticId);
+                return Results.Ok(location);
+            }
+            else
+            {
+                endpointLogger.LogWarning("Location with static ID '{StaticId}' not found in static data.", staticId);
+                return Results.NotFound($"Location with static ID '{staticId}' not found.");
+            }
         });
 
         // == Faction Endpoint ==

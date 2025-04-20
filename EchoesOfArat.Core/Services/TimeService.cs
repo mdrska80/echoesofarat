@@ -7,20 +7,22 @@ public class TimeService
 {
     private readonly WorldState _worldState;
     private readonly ILogger<TimeService> _logger;
-    // TODO: Inject other services needed for time-based updates (e.g., ExplorationService, NpcNeedsService)
-    // private readonly ExplorationService _explorationService;
+    private readonly ExplorationService _explorationService;
+    // TODO: Inject other services needed for time-based updates (e.g., NpcNeedsService)
 
-    public TimeService(WorldState worldState, ILogger<TimeService> logger /*, ExplorationService explorationService */)
+    public TimeService(WorldState worldState, ILogger<TimeService> logger, ExplorationService explorationService)
     {
         _worldState = worldState;
         _logger = logger;
-        // _explorationService = explorationService;
+        _explorationService = explorationService;
         _logger.LogInformation("TimeService initialized.");
     }
 
     public void AdvanceTurn(int hours = 1) // Allow advancing multiple hours?
     {
         if (hours <= 0) return;
+
+        _worldState.ClearTurnLogs(); // Clear logs from previous turn
 
         var previousTime = _worldState.CurrentGameTime;
         _worldState.CurrentGameTime = _worldState.CurrentGameTime.AddHours(hours);
@@ -31,11 +33,8 @@ public class TimeService
         // TODO: Update NPC needs (hunger, thirst, rest)
         // UpdateNeeds(hours);
 
-        // TODO: Update active expeditions
-        // foreach (var expedition in _worldState.ActiveExpeditions.ToList()) // ToList allows modification
-        // {
-        //     _explorationService.UpdateExpeditionProgress(expedition, hours);
-        // }
+        // Update active expeditions
+        _explorationService.UpdateExpeditions(hours, _worldState.CurrentTurnLogs);
 
         // TODO: Update base camp activities/production
         // UpdateBaseCamp(hours);

@@ -5,6 +5,7 @@
     <Nullable>enable</Nullable>
     <ImplicitUsings>enable</ImplicitUsings>
     <OutputType>Exe</OutputType>
+    <EnableDefaultContentItems>false</EnableDefaultContentItems>
 
     <!-- Properties for Self-Contained Deployment (Tauri Sidecar) -->
     <PublishSingleFile>true</PublishSingleFile>
@@ -24,12 +25,12 @@
     <PackageReference Include="Swashbuckle.AspNetCore" Version="6.5.0" />
   </ItemGroup>
 
-  <!-- Default SDK behavior includes Content items, so removing explicit include -->
-  <!-- <ItemGroup>
+  <!-- Explicitly include Data files now that default is disabled -->
+  <ItemGroup>
     <Content Include="Data\**">
       <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
       <CopyToPublishDirectory>PreserveNewest</CopyToPublishDirectory>
     </Content>
-  </ItemGroup> -->
+  </ItemGroup>
 
 </Project> 

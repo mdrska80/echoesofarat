@@ -1,3 +1,5 @@
+using System.Text.Json.Serialization; // For JsonIgnore
+
 namespace EchoesOfArat.Core.Models;
 
 public class WorldState
@@ -19,6 +21,14 @@ public class WorldState
     // TODO: Add ActiveExpeditions list later
     public List<ActiveExpedition> ActiveExpeditions { get; set; } = new();
 
+    /// <summary>
+    /// Log messages generated during the last processed turn.
+    /// This should be cleared before processing the next turn.
+    /// Marked with JsonIgnore so it's not saved in the save game file.
+    /// </summary>
+    [JsonIgnore]
+    public List<string> CurrentTurnLogs { get; private set; } = new();
+
     // Example method to add an NPC
     public void AddNpc(Npc npc)
     {
@@ -38,5 +48,11 @@ public class WorldState
     public void UpdateFaction(Faction faction)
     {
         Factions[faction.Type] = faction; // Add or update
+    }
+
+    // Method to clear logs before starting a new turn's processing
+    public void ClearTurnLogs()
+    {
+        CurrentTurnLogs.Clear();
     }
 } 
